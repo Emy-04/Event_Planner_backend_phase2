@@ -2,6 +2,12 @@ from flask import Flask
 from flask_bcrypt import Bcrypt
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
+from flask import Flask
+from flask_cors import CORS
+from app.routes.event_routes import event_bp
+
+
+
 
 # Initialize extensions
 bcrypt = Bcrypt()
