@@ -1,5 +1,6 @@
 from app.database import get_connection
-from main import bcrypt
+from app import bcrypt
+from flask_jwt_extended import create_access_token
 
 def register_user(data):
     email = data.get('email')
@@ -13,11 +14,15 @@ def register_user(data):
     try:
         conn = get_connection()
         cur = conn.cursor()
-        cur.execute("INSERT INTO users (email, password) VALUES (%s, %s)", (email, hashed_pw))
+        cur.execute(
+            "INSERT INTO users (email, password) VALUES (%s, %s) RETURNING id",
+            (email, hashed_pw)
+        )
+        user_id = cur.fetchone()[0]
         conn.commit()
         cur.close()
         conn.close()
-        return {"message": "User registered successfully!"}, 201
+        return {"message": "User registered successfully!", "user_id": user_id}, 201
     except Exception as e:
         print("Error:", e)
         return {"error": "User already exists or database error"}, 400
@@ -29,12 +34,14 @@ def login_user(data):
 
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("SELECT password FROM users WHERE email=%s", (email,))
+    cur.execute("SELECT id, password FROM users WHERE email=%s", (email,))
     user = cur.fetchone()
     cur.close()
     conn.close()
 
-    if user and bcrypt.check_password_hash(user[0], password):
-        return {"message": "Login successful!"}, 200
+    if user and bcrypt.check_password_hash(user[1], password):
+        # Use string ID as identity to avoid "Subject must be a string"
+        token = create_access_token(identity=str(user[0]))
+        return {"message": "Login successful!", "access_token": token}, 200
     else:
         return {"error": "Invalid email or password"}, 401

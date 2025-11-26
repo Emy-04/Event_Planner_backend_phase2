@@ -1,8 +1,9 @@
 from flask import Flask
 from flask_bcrypt import Bcrypt
 from flask_cors import CORS
-from .database import get_connection  # note the dot (.) for relative import
+from flask_jwt_extended import JWTManager
 
+# Initialize extensions
 bcrypt = Bcrypt()
 
 def create_app():
@@ -10,8 +11,18 @@ def create_app():
     CORS(app)
     bcrypt.init_app(app)
 
-    # Import routes after app is created
-    from .routes import register_routes
-    register_routes(app)
+    # JWT secret
+    app.config['JWT_SECRET_KEY'] = 'change-this-secret-key'
 
+    # Initialize JWT
+    jwt = JWTManager(app)
+
+    # Import blueprints AFTER initializing JWT
+    from app.routes.user_routes import user_bp
+    from app.routes.event_routes import event_bp
+
+    app.register_blueprint(user_bp, url_prefix='/api/user')
+    app.register_blueprint(event_bp, url_prefix='/api/event')
+
+    print("Flask app is starting...")
     return app
