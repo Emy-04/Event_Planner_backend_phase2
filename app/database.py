@@ -5,6 +5,6 @@ def get_connection():
         dbname="EventPlanner",     # your database name
         user="postgres",              # your PostgreSQL username
         password="mariam",# replace with your actual password
-        host="localhost",
+        host="db",
         port="5432"
     )
